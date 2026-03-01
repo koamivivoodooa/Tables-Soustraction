@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Calculatrice Djéhoutyenne — Tables de Soustraction (Défis & Récompenses)</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<style>
+  :root{
+    --bg:#0b1020; --panel:#121a33; --panel2:#0f1630; --text:#e8eeff; --muted:#b9c3ff;
+    --accent:#7c5cff; --good:#2ee59d; --warn:#ffd166; --bad:#ff4d6d; --line:#2a3566;
+  }
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#070b18,#0b1020);color:var(--text)}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px}
+  header{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+  .title{font-weight:900;letter-spacing:.3px;font-size:22px}
+  .subtitle{color:var(--muted);margin-top:4px;font-size:13px}
+  .badge{display:inline-block;background:rgba(124,92,255,.18);border:1px solid rgba(124,92,255,.35);color:#dcd6ff;
+    padding:6px 10px;border-radius:999px;font-size:12px;margin-top:10px}
+  .grid{display:grid;grid-template-columns:420px 1fr;gap:16px;margin-top:14px}
+  @media (max-width:960px){.grid{grid-template-columns:1fr}}
+  .card{background:rgba(18,26,51,.78);border:1px solid rgba(124,92,255,.22);border-radius:16px;padding:14px;box-shadow:0 12px 30px rgba(0,0,0,.25)}
+  .card h3{margin:0 0 8px;font-size:14px;color:#d8ddff}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  label{font-size:12px;color:var(--muted)}
+  input[type=number], select{
+    background:rgba(10,14,30,.75);color:var(--text);border:1px solid rgba(124,92,255,.28);
+    border-radius:10px;padding:10px 10px;font-size:14px;outline:none;min-width:120px
+  }
+  .btn{background:rgba(124,92,255,.95);border:none;color:white;padding:10px 12px;border-radius:12px;
+    font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(124,92,255,.22)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn2{background:rgba(46,229,157,.9)}
+  .btn3{background:rgba(255,209,102,.95);color:#1b1b1b}
+  .btn4{background:rgba(255,77,109,.95)}
+  .btnGhost{background:transparent;border:1px solid rgba(124,92,255,.35);color:var(--text)}
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);font-size:12px;color:var(--muted)}
+  .toggle{display:flex;gap:8px;align-items:center}
+  .toggle input{width:18px;height:18px}
+  .stat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .stat .box{background:rgba(10,14,30,.6);border:1px solid rgba(124,92,255,.18);border-radius:14px;padding:10px}
+  .box .k{font-size:11px;color:var(--muted)}
+  .box .v{font-size:18px;font-weight:900;margin-top:2px}
+  /* MISE À JOUR RESPONSIVE CANVAS */
+  canvas{width:100%; max-width:100%; height:auto; background:rgba(10,14,30,.35);border:1px solid rgba(124,92,255,.18);border-radius:16px}
+  .trace{width:100%;min-height:120px;background:rgba(10,14,30,.6);border:1px solid rgba(124,92,255,.18);
+    border-radius:14px;color:var(--text);padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;white-space:pre-wrap}
+  .hint{color:var(--muted);font-size:12px;line-height:1.35}
+  .hr{height:1px;background:rgba(255,255,255,.08);margin:10px 0}
+  .stars{font-size:20px}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:rgba(0,0,0,.75);
+    border:1px solid rgba(255,255,255,.18);padding:10px 12px;border-radius:12px;color:#fff;display:none;max-width:92vw}
+  .footerSig{margin-top:14px;color:rgba(255,255,255,.72);font-size:12px;line-height:1.35}
+  .footerSig strong{color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="title">CALCULATRICE DJÉHOUTYENNE CYCLIQUE LUDIQUE NON BINAIRE — <span style="color:var(--accent)">Tables de Soustraction</span></div>
+      <div class="subtitle">Maternelle – CP • Défis • Niveaux • Récompenses • Calcul par déplacement sur un anneau (cycle)</div>
+      <div class="badge">Ordinateur Djéhoutyen® — marque protégée INPI • Inventeur : <strong>Dodji Mahouignito Djéhouty OLOU</strong></div>
+    </div>
+    <div class="row">
+      <span class="pill">🔊 Sons/Voix</span>
+      <div class="toggle"><input id="soundToggle" type="checkbox" checked><label for="soundToggle">Activer</label></div>
+      <span class="pill">🎯 Mode</span>
+      <select id="modeSel">
+        <option value="libre">Découverte libre</option>
+        <option value="defis" selected>Défis (objectifs)</option>
+        <option value="classe">Mode classe (scores)</option>
+      </select>
+      <span class="pill">⚙️ Niveau</span>
+      <select id="levelSel">
+        <option value="1">Niveau 1 (facile)</option>
+        <option value="2" selected>Niveau 2</option>
+        <option value="3">Niveau 3</option>
+        <option value="4">Niveau 4 (difficile)</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <h3>1) Choisis ton calcul</h3>
+      <div class="row">
+        <div>
+          <label>Nombre d’états N (cycle)</label><br>
+          <input id="N" type="number" min="3" value="10">
+        </div>
+        <div>
+          <label>Départ (A)</label><br>
+          <input id="A" type="number" value="6">
+        </div>
+        <div>
+          <label>Soustraire (B)</label><br>
+          <input id="B" type="number" value="2">
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn btn2" id="newChallengeBtn">🎯 Nouveau défi</button>
+        <button class="btn btn3" id="execBtn">▶ Exécuter</button>
+        <button class="btn btnGhost" id="stepBtn">⬅ +1 pas</button>
+        <button class="btn btn4" id="resetBtn">↺ Réinitialiser</button>
+      </div>
+
+      <div class="stat">
+        <div class="box">
+          <div class="k">Résultat linéaire (école)</div>
+          <div class="v" id="linRes">—</div>
+        </div>
+        <div class="box">
+          <div class="k">Résultat cyclique (position sur le cercle)</div>
+          <div class="v" id="cycRes">—</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <span class="pill">⭐ Récompenses : <span class="stars" id="stars">☆☆☆☆☆</span></span>
+        <span class="pill">✅ Réussites : <strong id="wins">0</strong></span>
+        <span class="pill">🔥 Série : <strong id="streak">0</strong></span>
+        <span class="pill">🏁 Tours : <strong id="tours">0</strong> • +… : <strong id="extra">0</strong></span>
+      </div>
+
+      <div class="hr"></div>
+
+      <h3>2) Trace (ce que tu as fait)</h3>
+      <div class="row" style="justify-content:space-between">
+        <button class="btn btnGhost" id="clearTraceBtn">🧽 Effacer la trace</button>
+        <button class="btn btnGhost" id="exportTraceBtn">📄 Exporter la trace (.txt)</button>
+      </div>
+      <div class="trace" id="trace"></div>
+
+      <div class="hr"></div>
+
+      <div class="hint">
+        <strong>Astuce enfant :</strong> sur le cercle, <em>soustraire</em> veut dire <strong>reculer</strong>.<br>
+        Exemple : 6 − 2 → tu recules 2 fois : 6 → 5 → 4.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>3) Visualisation sur l’anneau</h3>
+      <canvas id="ring" width="640" height="520"></canvas>
+      <div class="footerSig">
+        <strong>Calculatrice Djéhoutyenne © 2026</strong> — Inventée par Dodji Mahouignito Djéhouty OLOU.<br>
+        © Ordinateur Djéhoutyen® — Calcul non binaire cyclique. Ce logiciel illustre un paradigme de calcul par déplacement géométrique.<br>
+        Licence : © 2026 Dodji Mahouignito Djéhouty OLOU – Gratuit pour usage personnel et pédagogique, revente interdite.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = (id)=>document.getElementById(id);
+  const NEl=$('N'), AEl=$('A'), BEl=$('B');
+  const modeSel=$('modeSel'), levelSel=$('levelSel');
+  const soundToggle=$('soundToggle');
+
+  const newChallengeBtn=$('newChallengeBtn');
+  const execBtn=$('execBtn'), stepBtn=$('stepBtn'), resetBtn=$('resetBtn');
+  const clearTraceBtn=$('clearTraceBtn'), exportTraceBtn=$('exportTraceBtn');
+
+  const linRes=$('linRes'), cycRes=$('cycRes');
+  const starsEl=$('stars'), winsEl=$('wins'), streakEl=$('streak');
+  const toursEl=$('tours'), extraEl=$('extra');
+  const traceEl=$('trace');
+  const toast=$('toast');
+
+  const canvas=$('ring'); const ctx=canvas.getContext('2d');
+
+  let state = {
+    N: 10, A: 6, B: 2,
+    targetEnabled: true,
+    targetCyc: 4,
+    currentPos: 6,
+    stepsDone: 0,
+    maxSteps: 2,
+    animating: false,
+    wins: 0, streak: 0, stars: 0,
+    attempts: 0,
+  };
+
+  const mod = (a,n)=>((a%n)+n)%n;
+
+  function speak(text){
+    if(!soundToggle.checked) return;
+    try{
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "fr-FR";
+      u.rate = 1.0;
+      u.pitch = 1.05;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  function beep(freq=660, dur=0.12){
+    if(!soundToggle.checked) return;
+    try{
+      const AC = window.AudioContext || window.webkitAudioContext;
+      const ac = new AC();
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type="sine";
+      o.frequency.value=freq;
+      g.gain.value=0.06;
+      o.connect(g); g.connect(ac.destination);
+      o.start();
+      setTimeout(()=>{o.stop(); ac.close();}, dur*1000);
+    }catch(e){}
+  }
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.style.display = "block";
+    clearTimeout(showToast._t);
+    showToast._t=setTimeout(()=>toast.style.display="none", 1600);
+  }
+
+  function logLine(line){
+    const t = traceEl.textContent.trim();
+    traceEl.textContent = (t ? t + "\n" : "") + line;
+    traceEl.scrollTop = traceEl.scrollHeight;
+  }
+
+  
+  function exportTrace(){
+    let content = traceEl.textContent.trim();
+    if(!content){
+      showToast("Trace vide.");
+      beep(220,.12);
+      return;
+    }
+
+    const blob = new Blob([content], {type:"text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ma_trace.txt";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast("Trace téléchargée.");
+    beep(880,.09);
+  }
+
+  function clearTrace(){
+    traceEl.textContent = "";
+    showToast("Trace effacée.");
+    beep(440,.08);
+  }
+
+  function updateStats(){
+    const N=state.N, A=state.A, B=state.B;
+    const lin = A - B;
+    const cyc = mod(lin, N);
+    linRes.textContent = String(lin);
+    cycRes.textContent = String(cyc);
+
+    const steps = state.maxSteps;
+    const tours = Math.floor(steps / N);
+    const extra = mod(steps, N);
+    toursEl.textContent = String(tours);
+    extraEl.textContent = String(extra);
+
+    winsEl.textContent = String(state.wins);
+    streakEl.textContent = String(state.streak);
+    starsEl.textContent = "★".repeat(state.stars) + "☆".repeat(Math.max(0,5-state.stars));
+  }
+
+  function normalizeInputs(){
+    state.N = Math.max(3, Math.floor(Number(NEl.value||10)));
+    if(!Number.isFinite(state.N)) state.N=10;
+    NEl.value = state.N;
+
+    state.A = Math.floor(Number(AEl.value||0));
+    if(!Number.isFinite(state.A)) state.A=0;
+
+    state.B = Math.max(0, Math.floor(Number(BEl.value||0)));
+    if(!Number.isFinite(state.B)) state.B=0;
+
+    AEl.value = state.A;
+    BEl.value = state.B;
+  }
+
+  function drawRing(){
+    const {N} = state;
+    const w=canvas.width, h=canvas.height;
+    ctx.clearRect(0,0,w,h);
+
+    ctx.fillStyle = "rgba(10,14,30,.22)";
+    ctx.fillRect(0,0,w,h);
+
+    const cx=w/2, cy=h/2-10;
+    const R=190;
+
+    ctx.fillStyle="rgba(232,238,255,.92)";
+    ctx.font="700 16px system-ui";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(`Anneau cyclique (N = ${N})`, cx, 40);
+
+    ctx.strokeStyle="rgba(124,92,255,.30)";
+    ctx.lineWidth=10;
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.stroke();
+
+    for(let i=0;i<N;i++){
+      const ang = -Math.PI/2 + (i/N)*Math.PI*2;
+      const x1 = cx + Math.cos(ang)*(R-14);
+      const y1 = cy + Math.sin(ang)*(R-14);
+      const x2 = cx + Math.cos(ang)*(R+14);
+      const y2 = cy + Math.sin(ang)*(R+14);
+      ctx.strokeStyle="rgba(255,255,255,.35)";
+      ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+
+      const xn = cx + Math.cos(ang)*(R+32);
+      const yn = cy + Math.sin(ang)*(R+32);
+      ctx.fillStyle="rgba(233,238,255,.92)";
+      ctx.font="700 14px system-ui";
+      ctx.fillText(String(i), xn, yn);
+    }
+
+    const start = mod(state.A, N);
+    const steps = state.stepsDone;
+    ctx.strokeStyle="rgba(46,229,157,.85)";
+    ctx.lineWidth=6;
+    ctx.lineCap="round";
+
+    let prev = start;
+    for(let s=1;s<=steps;s++){
+      const cur = mod(start - s, N);
+      const a1 = -Math.PI/2 + (prev/N)*Math.PI*2;
+      const a2 = -Math.PI/2 + (cur/N)*Math.PI*2;
+      ctx.beginPath();
+      ctx.arc(cx,cy,R, a1, a2, true);
+      ctx.stroke();
+      prev = cur;
+    }
+
+    const posA = mod(state.A, N);
+    const posCur = mod(state.currentPos, N);
+    const lin = state.A - state.B;
+    const posRes = mod(lin, N);
+
+    function marker(pos, color, label){
+      const ang = -Math.PI/2 + (pos/N)*Math.PI*2;
+      const x = cx + Math.cos(ang)*(R);
+      const y = cy + Math.sin(ang)*(R);
+      ctx.fillStyle=color;
+      ctx.beginPath(); ctx.arc(x,y,10,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="rgba(0,0,0,.35)";
+      ctx.lineWidth=3;
+      ctx.stroke();
+
+      ctx.fillStyle="rgba(232,238,255,.95)";
+      ctx.font="900 12px system-ui";
+      ctx.fillText(label, x, y-18);
+    }
+
+    marker(posA, "rgba(124,92,255,.95)", "Départ");
+    marker(posRes, "rgba(255,209,102,.95)", "Résultat");
+    marker(posCur, "rgba(46,229,157,.95)", "Toi");
+
+    const animals = ["🦁","🐘","🦒","🦓","🦛","🐆","🐒","🦜","🐊","🦏"];
+    const aIdx = mod(posCur, animals.length);
+    const angC = -Math.PI/2 + (posCur/N)*Math.PI*2;
+    const ax = cx + Math.cos(angC)*(R-28);
+    const ay = cy + Math.sin(angC)*(R-28);
+    ctx.font="32px system-ui";
+    ctx.fillText(animals[aIdx], ax, ay);
+
+    const half = Math.floor(N/2);
+    const halfReached = (state.stepsDone > 0 && state.stepsDone === half);
+    if(halfReached){
+      ctx.fillStyle="rgba(255,77,109,.18)";
+      ctx.beginPath(); ctx.arc(cx,cy,R+26,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="rgba(255,77,109,.95)";
+      ctx.font="900 16px system-ui";
+      ctx.fillText("MI-PARCOURS ✨", cx, cy+R+72);
+      beep(990,.05);
+    }
+
+    ctx.fillStyle="rgba(185,195,255,.95)";
+    ctx.font="700 13px system-ui";
+    ctx.fillText(`Soustraction : reculer de ${state.B} pas`, cx, cy+R+52);
+  }
+
+  function makeChallenge(){
+    normalizeInputs();
+    const N=state.N;
+    const mode = modeSel.value;
+    const level = Number(levelSel.value);
+
+    state.targetEnabled = (mode !== "libre");
+
+    let maxA, maxB;
+    if(level===1){ maxA = N-1; maxB = Math.max(1, Math.floor(N/4)); }
+    if(level===2){ maxA = N-1; maxB = Math.max(2, Math.floor(N/2)); }
+    if(level===3){ maxA = N*2-1; maxB = Math.max(3, Math.floor((3*N)/4)); }
+    if(level===4){ maxA = N*3-1; maxB = Math.max(4, N-1); }
+
+    const rnd = (m)=>Math.floor(Math.random()*m);
+    const A = (mode==="libre") ? state.A : rnd(maxA+1);
+    const B = (mode==="libre") ? state.B : (1 + rnd(maxB));
+
+    state.A = A;
+    state.B = B;
+    AEl.value = A;
+    BEl.value = B;
+
+    state.currentPos = A;
+    state.stepsDone = 0;
+    state.maxSteps = B;
+
+    const lin = A - B;
+    state.targetCyc = mod(lin, N);
+
+    if(state.targetEnabled){
+      logLine(`Nouveau défi : ${A} moins ${B}. Tu dois arriver au nombre ${state.targetCyc}.`);
+      speak("Nouveau défi !");
+      beep(660,.10);
+    }else{
+      logLine(`Mode libre : ${A} moins ${B}.`);
+      speak("Mode libre.");
+      beep(520,.08);
+    }
+
+    updateStats();
+    drawRing();
+  }
+
+  function checkSuccess(){
+    const N=state.N;
+    const posCur = mod(state.currentPos, N);
+    const done = (state.stepsDone >= state.maxSteps);
+
+    if(done){
+      speak("Résultat atteint.");
+      beep(880,.12);
+      if(state.targetEnabled){
+        state.wins += 1;
+        state.streak += 1;
+        if(state.wins % 2 === 0 && state.stars < 5) state.stars += 1;
+        logLine(`Bravo ! Tu es arrivé au bon nombre : ${posCur}.`);
+        showToast(["Super !","Génial !","Bravo !","Excellent !"][Math.floor(Math.random()*4)]);
+      }else{
+        logLine(`Tu as terminé. Tu es arrivé au nombre ${posCur}.`);
+      }
+      updateStats();
+      drawRing();
+      return true;
+    }
+    return false;
+  }
+
+  function doOneStep(){
+    if(state.animating) return;
+    normalizeInputs();
+
+    state.A = Math.floor(Number(AEl.value));
+    state.B = Math.max(0, Math.floor(Number(BEl.value)));
+    state.maxSteps = state.B;
+
+    if(state.stepsDone===0) state.currentPos = state.A;
+
+    if(state.stepsDone >= state.maxSteps){
+      speak("Résultat atteint.");
+      beep(880,.08);
+      showToast("Résultat atteint ✅");
+      return;
+    }
+
+    state.currentPos = state.currentPos - 1;
+    state.stepsDone += 1;
+
+    speak("Tu recules.");
+    beep(520,.06);
+
+    logLine(`Étape ${state.stepsDone} : tu es maintenant sur ${mod(state.currentPos,state.N)}.`);
+    drawRing();
+
+    if(state.stepsDone >= state.maxSteps){
+      checkSuccess();
+    }
+  }
+
+  async function runAnimation(){
+    if(state.animating) return;
+    normalizeInputs();
+    state.animating = true;
+    execBtn.disabled = true;
+    stepBtn.disabled = true;
+    newChallengeBtn.disabled = true;
+
+    state.A = Math.floor(Number(AEl.value));
+    state.B = Math.max(0, Math.floor(Number(BEl.value)));
+    state.maxSteps = state.B;
+    if(state.stepsDone===0) state.currentPos = state.A;
+
+    speak("Exécution.");
+    beep(740,.09);
+
+    while(state.stepsDone < state.maxSteps){
+      state.currentPos = state.currentPos - 1;
+      state.stepsDone += 1;
+      speak("Tu recules.");
+      beep(520,.045);
+      logLine(`Étape ${state.stepsDone} : tu es maintenant sur ${mod(state.currentPos,state.N)}.`);
+      drawRing();
+      await new Promise(r=>setTimeout(r, 260));
+    }
+
+    checkSuccess();
+
+    state.animating = false;
+    execBtn.disabled = false;
+    stepBtn.disabled = false;
+    newChallengeBtn.disabled = false;
+  }
+
+  function resetRun(){
+    normalizeInputs();
+    state.A = Math.floor(Number(AEl.value));
+    state.B = Math.max(0, Math.floor(Number(BEl.value)));
+    state.maxSteps = state.B;
+    state.currentPos = state.A;
+    state.stepsDone = 0;
+    logLine(`On recommence. Tu repars du nombre ${mod(state.A,state.N)}.`);
+    speak("Réinitialisé.");
+    beep(440,.06);
+    drawRing();
+  }
+
+  function recompute(){
+    normalizeInputs();
+    if(state.stepsDone===0) state.currentPos = state.A;
+    updateStats();
+    drawRing();
+  }
+
+  NEl.addEventListener('input', recompute);
+  AEl.addEventListener('input', recompute);
+  BEl.addEventListener('input', recompute);
+
+  newChallengeBtn.addEventListener('click', () => {
+    makeChallenge();
+    if(modeSel.value==="classe") state.attempts += 1;
+  });
+
+  execBtn.addEventListener('click', runAnimation);
+  stepBtn.addEventListener('click', doOneStep);
+  resetBtn.addEventListener('click', resetRun);
+
+  clearTraceBtn.addEventListener('click', clearTrace);
+  exportTraceBtn.addEventListener('click', exportTrace);
+
+  modeSel.addEventListener('change', makeChallenge);
+  levelSel.addEventListener('change', makeChallenge);
+
+  function init(){
+    traceEl.textContent = "Bienvenue ! Choisis un nombre de départ et un nombre à soustraire. Puis clique sur +1 pas ou sur Exécuter.";
+    makeChallenge();
+    updateStats();
+    drawRing();
+  }
+  init();
+})();
+
+// MISE À JOUR : ENREGISTREMENT SERVICE WORKER
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW enregistré !'))
+      .catch(err => console.log('Erreur SW', err));
+  });
+}
+</script>
+</body>
+</html>
